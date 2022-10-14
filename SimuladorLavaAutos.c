@@ -80,7 +80,7 @@ float conseguirIntervaloArribo(){
     if(!esDomingo())
         return (-log(-log(random2())) * 34.502 + 88.855);
     else
-        return 30; //NOTA: cambiar 30 por otra fdp
+        return ((pow(-log(random2()), -0.10992) -1) / 0.10992)*20.772 + 44.683;
 }
 
 float conseguirTiempoAtencion(){
