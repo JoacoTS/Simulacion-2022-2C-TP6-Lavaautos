@@ -78,16 +78,12 @@ int esFinDeSemana(){
 }
 
 float conseguirIntervaloArribo(){
-    if(!esFinDeSemana()){
-        return (-log(-log(random2())) * 34.502 + 88.855);
-    }
-    else{
-        float r = random2();
-        while(r < 0.00001) r = random2();
-        return (((pow(-log(r), -0.10992) -1) / 0.10992)*20.772 + 44.683);
-    }
+    float r = random2();
+    if(!esFinDeSemana())
+	    return pow(pow(r, 1/-0.58755) - 1, 1 / -4.7632) * 56.177;
+    else
+    	return pow(pow(r, 1/-0.47661) - 1, 1 / -4.6814) * 38.438;
 }
-
 
 float conseguirTiempoAtencion(){
     double r = random2();
@@ -108,8 +104,6 @@ void establecerCondicionesIniciales(int cantidadPuestos, TEF *tef){
     
     NTA = 0, NTB = 0;
     ARR = 0;
-    //STPA = 0, STPB = 0;
-    //STAA = 0, STAB = 0;
     STP = 0, STA = 0;
     STOA = 0;
     STOB = malloc(sizeof(float) * CP);
