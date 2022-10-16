@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#define HV 999999
+#define HV 9999999999
 //----------DEFINICIONES----------------//
 
 typedef enum {LLEGADA, SALIDA_A, SALIDA_B} TipoEvento;
@@ -22,6 +22,7 @@ typedef struct{
 }TEF;
 
 //----------VARIABLES-----------------//
+int DIAS_ALTA_DEMANDA = 2;
 
 int CP;
 
@@ -32,8 +33,7 @@ int NSA, NSB;
 
 int NTA, NTB;
 int ARR;
-float STPA, STPB;
-float STAA, STAB;
+float STP, STA;
 float STOA, *STOB;
 float ITOA, *ITOB;
 
@@ -64,16 +64,28 @@ int puestoBVacio(TEF *tef){
     return -1;
 }
 
-int esDomingo(){
-    return (int)t % (24 * 7 * 60) < 24;
+int proximaSalidaB(TEF *tef){
+    int ret = 0;
+    for(int i = 0; i < CP; i++){
+        if(tef->TPSB[i] < tef->TPSB[ret])
+            ret = i;
+    }
+    return ret;
+}
+
+int esFinDeSemana(){
+    return (int)t % (24 * 7 * 60) < DIAS_ALTA_DEMANDA * 60 * 24;
 }
 
 float conseguirIntervaloArribo(){
-    if(!esDomingo())
+    if(!esFinDeSemana()){
         return (-log(-log(random2())) * 34.502 + 88.855);
-    else
-        return ((pow(-log(random2()), -0.10992) -1) / 0.10992)*20.772 + 44.683;
+    }
+    else{
+        return (((pow(-log(random2()), -0.10992) -1) / 0.10992)*20.772 + 44.683);
+    }
 }
+
 
 float conseguirTiempoAtencion(){
     double r = random2();
@@ -87,15 +99,16 @@ void establecerCondicionesIniciales(int cantidadPuestos, TEF *tef){
     CP = cantidadPuestos;
     
     t = 0;
-    TF = 365 * 24 * 60;
+    TF = 9000 * 24 * 60;
     
     NSA = 0;
     NSB = 0;
     
     NTA = 0, NTB = 0;
     ARR = 0;
-    STPA = 0, STPB = 0;
-    STAA = 0, STAB = 0;
+    //STPA = 0, STPB = 0;
+    //STAA = 0, STAB = 0;
+    STP = 0, STA = 0;
     STOA = 0;
     STOB = malloc(sizeof(float) * CP);
     for(int i = 0; i < CP; i++) STOB[i] = 0;
@@ -226,7 +239,7 @@ void actualizarEFC(Evento e, TEF *tef){
             if(NSA == 1){
                 float TA = conseguirTiempoAtencion();
                 tef->TPSA = t + TA;
-                STAA = STAA + TA;
+                STA = STA + TA;
                 STOA = STOA + (t - ITOA);
             }
             else if(NSA == 2 && puestoBVacio(tef) != -1){
@@ -235,7 +248,7 @@ void actualizarEFC(Evento e, TEF *tef){
                 NSB++;
                 float TA = conseguirTiempoAtencion();
                 tef->TPSB[i] = t + TA;
-                STAB = STAB + TA;
+                STA = STA + TA;
                 STOB[i] = STOB[i] + (t - ITOB[i]);
             }
         }
@@ -244,7 +257,7 @@ void actualizarEFC(Evento e, TEF *tef){
                 int i = puestoBVacio(tef);
                 float TA = conseguirTiempoAtencion();
                 tef->TPSB[i] = t + TA;
-                STAB = STAB + TA;
+                STA = STA + TA;
                 STOB[i] = STOB[i] + (t - ITOB[i]);
             }
         }
@@ -253,7 +266,7 @@ void actualizarEFC(Evento e, TEF *tef){
         if(NSA >= 1){
             float TA = conseguirTiempoAtencion();
             tef->TPSA = t + TA;
-            STAA = STAA + TA;
+            STA = STA + TA;
         }
         else{
             tef->TPSA = HV;
@@ -261,17 +274,17 @@ void actualizarEFC(Evento e, TEF *tef){
         }
         break;
     case SALIDA_B:
-        if(NSA >= 2){
+        if(NSA > 2){
             NSA--;
             NSB++;
             float TA = conseguirTiempoAtencion();
             tef->TPSB[e.indice] = t + TA;
-            STAB = STAB + TA;
+            STA = STA + TA;
         }
-        else if(NSA <= 2 && NSB >= CP){
+        else if(NSB >= CP){
             float TA = conseguirTiempoAtencion();
             tef->TPSB[e.indice] = t + TA;
-            STAB = STAB + TA;
+            STA = STA + TA;
         }
         else{
             tef->TPSB[e.indice] = HV;
@@ -285,18 +298,17 @@ void actualizarEFC(Evento e, TEF *tef){
 
 void calcularResultados(){
     //Promedio permanencia sistema
-    PPS = (STPA + STPB) / (NTA + NTB);
+    PPS = (STP) / (NTA + NTB);
 
     //Prmedio espera cola
-    PEC = (STPA + STPB - (STAA + STAB)) / (NTA + NTB);
+    /*
+    Nota: si nunca se formo fila (como muchas veces pasa con 5 puestos de atencion),
+    STP deberia ser igual a STA, pero por problemas de redondeo puede pasar que
+    STA sea mayor que STP y eso de un tiempo de espera negativo, por eso se usa la
+    funcion 'max'
+    */
+    PEC = fmax(0,STP - STA) / (NTA + NTB);
 
-    printf("NTA %d\n", NTA);
-    printf("NTB %d\n", NTB);
-    printf("STAA: %f\n", STAA);
-    printf("STAB: %f\n", STAB);
-    printf("STPA: %f\n", STPA);
-    printf("STPB: %f\n", STPB);
-    
     //Porcentaje arrepentidos
     PPA = ARR * 100 / (NTA + NTB + ARR);
     
@@ -316,6 +328,8 @@ void imprimirResultados(){
         printf("\t Puesto numero %d, tiempo ocioso: %f\n", i, PTOB[i]);
     
     printf("Variable de control (Cantidad puesto): %d\n", CP);
+    printf("NSA: %d\n", NSA);
+    printf("NSB: %d\n", NSB);
 }
 
 int main()
@@ -330,18 +344,19 @@ int main()
     
     //NOTA: el numero pasado por parametro es la variable de control
     establecerCondicionesIniciales(cantidadPuestos, tef);
-
     Evento e;
+
+    int dia = 1;
     while(t < TF){
-        printf("Eligiendo siguiente evento\n");
+
+        //printf("Eligiendo siguiente evento\n");
         e = definirSiguienteEvento(tef);
-        STPA = STPA + (e.tiempo - t) * NSA;
-        STPB = STPB + (e.tiempo - t) * NSB;
-        printf("Actualizando t\n");
+        STP = STP + (e.tiempo - t) * (NSA + NSB);
+        //printf("Actualizando t\n");
         t = e.tiempo;
-        printf("Actualizando EFNC\n");
+        //printf("Actualizando EFNC\n");
         actualizarEFNC(e, tef);
-        printf("Actualizando EFC\n");
+        //printf("Actualizando EFC\n");
         if(actualizarVectorEstado(&e, tef))
             actualizarEFC(e, tef);
     }
