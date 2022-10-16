@@ -54,18 +54,6 @@ float random2(){
 int puestoBVacio(TEF *tef){
     int i = (ultimoPuestoBUsado + 1) % CP;
     for(int vuelta = 0; vuelta < CP; vuelta++, i++){
-        if(tef->TPSB[i] == HV){
-            ultimoPuestoBUsado = i;
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-int puestoBVacio(TEF *tef){
-    int i = (ultimoPuestoBUsado + 1) % CP;
-    for(int vuelta = 0; vuelta < CP; vuelta++, i++){
         i = (i % CP);
         if(tef->TPSB[i] == HV){
             ultimoPuestoBUsado = i;
