@@ -63,13 +63,17 @@ int puestoBVacio(TEF *tef){
     return -1;
 }
 
-int proximaSalidaB(TEF *tef){
-    int ret = 0;
-    for(int i = 0; i < CP; i++){
-        if(tef->TPSB[i] < tef->TPSB[ret])
-            ret = i;
+int puestoBVacio(TEF *tef){
+    int i = (ultimoPuestoBUsado + 1) % CP;
+    for(int vuelta = 0; vuelta < CP; vuelta++, i++){
+        i = (i % CP);
+        if(tef->TPSB[i] == HV){
+            ultimoPuestoBUsado = i;
+            return i;
+        }
     }
-    return ret;
+
+    return -1;
 }
 
 int esDomingo(){
