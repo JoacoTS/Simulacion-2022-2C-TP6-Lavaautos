@@ -78,7 +78,7 @@ float conseguirIntervaloArribo(){
 float conseguirTiempoAtencion(){
     double r = random2();
     while(r == 1) r = random2();
-    return fmax((30.0/pow(1.0-r, 1.0/2.1654)), 200);
+    return fmin((30.0/pow(1.0-r, 1.0/2.1654)), 200);
 }
 
 //-----------FUNCIONES PRINCIPALES------------//
