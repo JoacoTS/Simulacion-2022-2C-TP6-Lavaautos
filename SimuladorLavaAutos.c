@@ -82,7 +82,9 @@ float conseguirIntervaloArribo(){
         return (-log(-log(random2())) * 34.502 + 88.855);
     }
     else{
-        return (((pow(-log(random2()), -0.10992) -1) / 0.10992)*20.772 + 44.683);
+        float r = random2();
+        while(r < 0.00001) r = random2();
+        return (((pow(-log(r), -0.10992) -1) / 0.10992)*20.772 + 44.683);
     }
 }
 
